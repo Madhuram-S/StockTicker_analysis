@@ -10,10 +10,6 @@ In this assignment you will use VBA scripting to analyze real stock market data.
 
 * [Stock Data](Instructions/Resources/Multiple_year_stock_data.xlsx) - Run your scripts on this data to generate the final homework report.
 
-### Stock market analyst
-
-![stock Market](Instructions/Images/stockmarket.jpg)
-
 ### Step 1
 
 * Create a script that will loop through each year of stock data and grab the total amount of volume each stock had over the year.
