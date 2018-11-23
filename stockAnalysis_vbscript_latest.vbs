@@ -1,30 +1,22 @@
 ' Function that performs following calculation
 ' Calculates total stock volume by ticker
-' Calculates Yearlychange (Close - open), % Percent change for each ticker
+' Calculates Yearlychange (Close - open),
+' % Percent change for each ticker ((Close - Open) / Open) *100
 ' Finds out greatest % increase, greatest % decrease and Greatest total stock volume
-' 2D arrays will be used to peform all calculations and stored in the result range
+' 2D arrays will be used to peform all calculations and then stored in the result range
 '**********************************************************************************************'
-Sub Main()
-    
-    Debug.Print Now()
+Sub Main_AnalyzeStock()
     
     '--------------------------------------------------------------------------------
     ' BEGIN - Variable Declaration
     '--------------------------------------------------------------------------------
-    'Declare worksheet variables
-    Dim wb As Workbook
-    Dim aws As Excel.Worksheet
-    Dim last_row, last_Col As String
     
-    'Delcare data variables
+    Dim aws As Excel.Worksheet
     Dim next_tkr As String
-    Dim i, j, cntr, open_date, close_date As Long
+    Dim i, j, cntr, last_row, last_Col As Long
     Dim volSum, open_val, close_val, percent_chng As Double
     Dim set_open_val As Boolean
-    
-    ' Declare arrays
-   ' Dim source_data, tmp, results, min_max As Variant
-    
+      
     '--------------------------------------------------------------------------------
     ' END - Variable Declaration
     '--------------------------------------------------------------------------------
@@ -34,8 +26,6 @@ Sub Main()
     '--------------------------------------------------------------------------------
     For Each aws In ThisWorkbook.Worksheets
     
-        'Set aws = ThisWorkbook.ActiveSheet ' Only for testing
-        
         ' Declare arrays -- !!!! IMPORTANT: TO ENABLE RE-INITIALIZATION !!!!
         Dim source_data, tmp, results, min_max As Variant
     
@@ -56,9 +46,9 @@ Sub Main()
         ' This array will store greatest % increase, % decrease and total stock volume
             
         min_max = Array(Array("", "Ticker", "Value"), _
-                        Array("Greatest % Increase", 0, 0), _
-                        Array("Greatest % Decrease", 0, 0), _
-                        Array("Greatest Total Volume", 0, 0))
+                        Array("Greatest % Increase", "", 0), _
+                        Array("Greatest % Decrease", "", 0), _
+                        Array("Greatest Total Volume", "", 0))
                         
         With WorksheetFunction
             min_max = .Transpose(.Transpose(min_max))
@@ -83,7 +73,7 @@ Sub Main()
                      last_row = .Rows.Count
                      last_Col = .Columns.Count
                      
-                    ' sort the range data by ticker and data in ascending order
+                    ' sort the range data by ticker and data in ascending order.
                     .Sort key1:="<ticker>", order1:=xlAscending, Key2:="<date>", order2:=xlAscending, _
                                     Header:=xlYes
                     
@@ -97,8 +87,7 @@ Sub Main()
         '--------------------------------------------------------------------------------
         ' END - Sort & Copy source data range into a 2-D array
         '--------------------------------------------------------------------------------
-        
-        
+                
         '------------------------------------------------------------------
         ' BEGIN : Calculate
         '   a. Total volume by ticker
@@ -132,7 +121,7 @@ Sub Main()
                     
                 
                 ' add the ticker, vol sum, yrly_chng (close - open), %change [(close - open)/open]
-                ' to another summary array
+                ' to results array
                 
                 ' redimension the results array based on empty or not empty
                 If (IsEmpty(results)) Then
@@ -154,7 +143,9 @@ Sub Main()
                 If (open_val = 0) Then
                     percent_chng = 0
                 Else
-                    percent_chng = ((close_val - open_val) / open_val)  ' calc % change
+                	' calc % change.
+                	' Note : don't use *100. formatting will take care of it later
+                    percent_chng = ((close_val - open_val) / open_val)  
                 End If
                 
                 results(0, cntr) = source_data(i, 1)                ' ticker value
@@ -177,7 +168,7 @@ Sub Main()
                 End If
                 
                 If (min_max(2, 3) < percent_chng) Then
-                    ' this means current % change is lowest, so replace it as greatest % increase
+                    ' this means current % change is highest, so replace it as greatest % increase
                     min_max(2, 3) = percent_chng
                     min_max(2, 2) = source_data(i, 1)
                 End If
@@ -221,16 +212,18 @@ Sub Main()
             Next j
         Next i
         
-        ' Select the range of cells that need to be populated dynamically
+        ' Dynamically select the range of cells that needs to be populated 
         With aws.Range(Cells(1, last_Col + 2), Cells(UBound(tmp, 1) + 1, last_Col + UBound(tmp, 2) + 2))
             
             ' set range active and copy array to the range without any formatting
             .Select
-            .Value2 = tmp ' copy
+            .Value2 = tmp ' copy array to Range in active sheet
             
             ' BEGIN - Formatting
             
-            ' add the conditional formating to Yearly Change column
+            ' add the conditional formating to Yearly Change column 
+            ' Green color if value >= 0.00 and Red for value < 0.00
+
             With .Columns(2)
                 .FormatConditions.Add Type:=xlCellValue, Operator:=xlLess, _
                         Formula1:="0.00"
@@ -275,7 +268,6 @@ Sub Main()
             ' Apply formatting as required, finally autofit for better presentation
             .Columns(3).NumberFormat = "0.00%"
             .Cells(4, 3).NumberFormat = "0"
-            .Rows.AutoFit
             .Columns.AutoFit
                     
         End With
@@ -285,16 +277,11 @@ Sub Main()
         '---------------------------------------------------------------------------------------------
         
         'clear & re-initialize all arrays
-        Erase source_data
-        Erase tmp
+        Erase source_data, tmp, min_max
         results = Empty
-        Erase min_max
-       
-    
+        
     Next aws
     
     MsgBox "!!! Analysis Complete !!!"
-            
-    Debug.Print Now()
-    
+       
 End Sub
