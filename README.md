@@ -6,9 +6,9 @@ In this assignment you will use VBA scripting to analyze real stock market data.
 
 ### Files
 
-* [Test Data](Instructions/Resources/alphabtical_testing.xlsx) - Use this while developing your scripts.
+* Test data - Use this while developing your scripts.
 
-* [Stock Data](Instructions/Resources/Multiple_year_stock_data.xlsx) - Run your scripts on this data to generate the final homework report.
+* Stock data - Run your scripts on this data to generate the final homework report.
 
 ### Step 1
 
