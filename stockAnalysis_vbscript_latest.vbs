@@ -10,13 +10,11 @@ Sub Main_AnalyzeStock()
     '--------------------------------------------------------------------------------
     ' BEGIN - Variable Declaration
     '--------------------------------------------------------------------------------
-    
-    Dim aws As Excel.Worksheet
-    Dim next_tkr As String
-    Dim i, j, cntr, last_row, last_Col As Long
-    Dim volSum, open_val, close_val, percent_chng As Double
-    Dim set_open_val As Boolean
-      
+        Dim aws As Excel.Worksheet
+        Dim next_tkr As String
+        Dim i, cntr As Long
+        Dim volSum, open_val, close_val, percent_chng As Double
+        Dim set_open_val As Boolean
     '--------------------------------------------------------------------------------
     ' END - Variable Declaration
     '--------------------------------------------------------------------------------
@@ -32,28 +30,20 @@ Sub Main_AnalyzeStock()
         '--------------------------------------------------------------------------------
         ' BEGIN - Variable Initialization & default value setting
         '--------------------------------------------------------------------------------
-        
-        'initialize counters and default variables
-        
-        cntr = 1 ' as 0 is for header
-        volSum = 0 ' initialize it to zero
-        percent_chng = 0
-        set_open_val = True ' Indicator to indicate that open value of a ticker needs to be captured
-        next_tkr = ""
-        
-        
-        ' initialize min-max array.
-        ' This array will store greatest % increase, % decrease and total stock volume
+            'initialize counters and default variables
             
-        min_max = Array(Array("", "Ticker", "Value"), _
-                        Array("Greatest % Increase", "", 0), _
-                        Array("Greatest % Decrease", "", 0), _
-                        Array("Greatest Total Volume", "", 0))
-                        
-        With WorksheetFunction
-            min_max = .Transpose(.Transpose(min_max))
-        End With
-        
+            cntr = 1 ' as 0 is for header
+            volSum = 0 ' initialize it to zero
+            percent_chng = 0
+            set_open_val = True ' Indicator to indicate that open value of a ticker needs to be captured
+            next_tkr = ""
+
+            'Initialize results array
+            ReDim results(0 To 3, 0 To 1)
+             results(0, 0) = "Ticker"
+             results(1, 0) = "Yearly Change"
+             results(2, 0) = "Percent Change"
+             results(3, 0) = "Total Stock Volume"
         '--------------------------------------------------------------------------------
         ' END - Variable Initialization & default value setting
         '--------------------------------------------------------------------------------
@@ -68,11 +58,6 @@ Sub Main_AnalyzeStock()
                     
                     .Select ' Activate current source data region
                     
-                    'get last row and col from current worksheet
-                    
-                     last_row = .Rows.Count
-                     last_Col = .Columns.Count
-                     
                     ' sort the range data by ticker and data in ascending order.
                     .Sort key1:="<ticker>", order1:=xlAscending, Key2:="<date>", order2:=xlAscending, _
                                     Header:=xlYes
@@ -83,7 +68,6 @@ Sub Main_AnalyzeStock()
                End With
                
             End With
-            
         '--------------------------------------------------------------------------------
         ' END - Sort & Copy source data range into a 2-D array
         '--------------------------------------------------------------------------------
@@ -98,7 +82,6 @@ Sub Main_AnalyzeStock()
         ' <ticker>    <date>  <open>  <high>  <low>   <close> <vol>
         '    1          2       3       4       5       6       7
         '------------------------------------------------------------------
-    
         For i = 2 To UBound(source_data, 1) ' ignore row 1 as it is header row
                     
             If (i = UBound(source_data, 1)) Then
@@ -118,63 +101,22 @@ Sub Main_AnalyzeStock()
                 
                 ' get close date value to calculate yearly change and % change
                 close_val = source_data(i, 6)
-                    
+                
+                If (open_val <> 0) Then
+                    ' calc % change. Note : don't use *100. formatting will take care of it later
+                    percent_chng = ((close_val - open_val) / open_val)  
+                End If
                 
                 ' add the ticker, vol sum, yrly_chng (close - open), %change [(close - open)/open]
                 ' to results array
                 
-                ' redimension the results array based on empty or not empty
-                If (IsEmpty(results)) Then
-                    
-                    ' if array is empty, add the headers
-                     ReDim results(0 To 3, 0 To 1)
-                     results(0, 0) = "Ticker"
-                     results(1, 0) = "Yearly Change"
-                     results(2, 0) = "Percent Change"
-                     results(3, 0) = "Total Stock Volume"
-                     
-                Else
-                
-                    ' if not empty redimension results arr with new row with preserve data option
+                'redimension results arr with new row with preserve data option
                     ReDim Preserve results(UBound(results, 1), LBound(results, 2) To (UBound(results, 2) + 1))
-                
-                End If
-                
-                If (open_val = 0) Then
-                    percent_chng = 0
-                Else
-                	' calc % change.
-                	' Note : don't use *100. formatting will take care of it later
-                    percent_chng = ((close_val - open_val) / open_val)  
-                End If
-                
-                results(0, cntr) = source_data(i, 1)                ' ticker value
-                results(1, cntr) = close_val - open_val             ' yearly change
-                results(2, cntr) = percent_chng                     ' % change
-                results(3, cntr) = volSum                           'Total stock volume
-                
-                                
-                '**** Begin - calculation for Greatest % increase, %decrease & total stock vol table **********
-                
-                If (min_max(4, 3) < volSum) Then
-                    min_max(4, 3) = volSum             ' replace the greatest total stock volume
-                    min_max(4, 2) = source_data(i, 1)   'replace ticker name too
-                End If
-                
-                If (min_max(3, 3) > percent_chng) Then
-                    ' this means current % change is lowest, so replace it as greatest % decrease
-                    min_max(3, 3) = percent_chng
-                    min_max(3, 2) = source_data(i, 1)
-                End If
-                
-                If (min_max(2, 3) < percent_chng) Then
-                    ' this means current % change is highest, so replace it as greatest % increase
-                    min_max(2, 3) = percent_chng
-                    min_max(2, 2) = source_data(i, 1)
-                End If
-                
-              
-                '**** End - calculation for Greatest % increase, %decrease & total stock vol table *********
+
+                    results(0, cntr) = source_data(i, 1)                ' ticker value
+                    results(1, cntr) = close_val - open_val             ' yearly change
+                    results(2, cntr) = percent_chng                     ' % change
+                    results(3, cntr) = volSum                           'Total stock volume
                 
                 ' reset all cntrs, values and indicators
                 volSum = 0
@@ -182,6 +124,7 @@ Sub Main_AnalyzeStock()
                 open_val = 0
                 close_val = 0
                 set_open_val = True
+                percent_chng = 0
                 
             Else
                 If (set_open_val And source_data(i, 3) <> 0) Then
@@ -193,9 +136,7 @@ Sub Main_AnalyzeStock()
                 volSum = volSum + source_data(i, 7)
             End If
             
-            
         Next i
-        
         '------------------------------------------------------------------
         ' END : ************ All calculation done ***********
         '------------------------------------------------------------------
@@ -204,76 +145,98 @@ Sub Main_AnalyzeStock()
         ' BEGIN - Add the summary of Yrly change, % change, Total stock volume by Ticker to Active sheet
         '---------------------------------------------------------------------------------------------
         
-        'transpose the array to add to the range for better viewing in excel
-        ReDim tmp(UBound(results, 2), UBound(results, 1))
-        For i = 0 To UBound(results, 2)
-            For j = 0 To UBound(results, 1)
-                tmp(i, j) = results(j, i)
-            Next j
-        Next i
+            'transpose the array to add to the range for better viewing in excel
+            tmp = WorksheetFunction.Transpose(results)
         
-        ' Dynamically select the range of cells that needs to be populated 
-        With aws.Range(Cells(1, last_Col + 2), Cells(UBound(tmp, 1) + 1, last_Col + UBound(tmp, 2) + 2))
-            
-            ' set range active and copy array to the range without any formatting
-            .Select
-            .Value2 = tmp ' copy array to Range in active sheet
-            
-            ' BEGIN - Formatting
-            
-            ' add the conditional formating to Yearly Change column 
-            ' Green color if value >= 0.00 and Red for value < 0.00
+            ' The result range is stored in I:L range. select the range of cells that needs to be populated 
+            With aws.Range("I1:L" & UBound(tmp, 1))
+                
+                ' set range active and copy array to the range without any formatting
+                .Select
+                .Value2 = tmp ' copy array to Range in active sheet
+                
+                ' BEGIN - Formatting
+                ' add the conditional formating to Yearly Change column 
+                ' Green color if value >= 0.00 and Red for value < 0.00
 
-            With .Columns(2)
-                .FormatConditions.Add Type:=xlCellValue, Operator:=xlLess, _
-                        Formula1:="0.00"
-                .FormatConditions.Add Type:=xlCellValue, Operator:=xlGreater, _
-                        Formula1:="0.00"
-                .FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
-                        Formula1:="=0.00"
-               
-                .FormatConditions(1).Interior.ColorIndex = 3 			' Red for values < 0
-                .FormatConditions(1).StopIfTrue = False
-                .FormatConditions(2).Interior.ColorIndex = 4			' Green for values > 0
-                .FormatConditions(2).StopIfTrue = False
-                .FormatConditions(3).Interior.ColorIndex = 4			' Green for values = 0
-                .FormatConditions(3).StopIfTrue = False
-            
+                With .Columns(2)
+                    .FormatConditions.Add Type:=xlCellValue, Operator:=xlLess, _
+                            Formula1:="0.00"
+                    .FormatConditions.Add Type:=xlCellValue, Operator:=xlGreater, _
+                            Formula1:="0.00"
+                    .FormatConditions.Add Type:=xlCellValue, Operator:=xlEqual, _
+                            Formula1:="=0.00"
+                   
+                    .FormatConditions(1).Interior.ColorIndex = 3 			' Red for values < 0
+                    .FormatConditions(1).StopIfTrue = False
+                    .FormatConditions(2).Interior.ColorIndex = 4			' Green for values > 0
+                    .FormatConditions(2).StopIfTrue = False
+                    .FormatConditions(3).Interior.ColorIndex = 4			' Green for values = 0
+                    .FormatConditions(3).StopIfTrue = False
+                
+                End With
+
+                .Columns(2).NumberFormat = "0.00000000#" 	' number format for yrly Change cells
+                .Columns(3).NumberFormat = "0.00%" 			' % format for % Change cells
+                
+                ' Clear any formats set to the header by conditional formating
+                .Rows(1).ClearFormats
+                
+                .Columns.AutoFit               ' Autofit for clear presentation
+
+                '---------------------------------------------------------------------------------------------
+                ' BEGIN - Copy > % Increase, >% decrease, > total stock volume to worksheet
+                '---------------------------------------------------------------------------------------------
+                    ' initialize min-max array.
+                    ' This array will store greatest % increase, % decrease and total stock volume
+                        
+                    min_max = Array(Array("", "Ticker", "Value"), _
+                                    Array("Greatest % Increase", "", 0), _
+                                    Array("Greatest % Decrease", "", 0), _
+                                    Array("Greatest Total Volume", "", 0))
+                                    
+                    With WorksheetFunction
+                        min_max = .Transpose(.Transpose(min_max))
+                    End With
+                    
+                    'Sort the results by % change desc. The first row will be %increase and last row will %decrease
+
+                    .Sort key1:="Percent Change", order1:=xlDescending, Header:=xlYes
+                    min_max(2, 3) = .Cells(2, 3).Value
+                    min_max(2, 2) = .Cells(2, 1).Value
+                    min_max(3, 3) = .Cells(.End(xlDown).Row, 3).Value
+                    min_max(3, 2) = .Cells(.End(xlDown).Row, 1).Value
+                    
+                    'min_max(3, 3) = .Cells(UBound(tmp, 1) - 1, 3).Value
+                    'min_max(3, 2) = .Cells(UBound(tmp, 1) - 1, 1).Value
+
+                    .Sort key1:="Total Stock volume", order1:=xlDescending, Header:=xlYes
+                    min_max(4, 3) = .Cells(2, 4).Value
+                    min_max(4, 2) = .Cells(2, 1).Value
+                    
+                    'Reverse results range to sorted by Ticker asc.
+                    .Sort key1:="Ticker", order1:=xlAscending, Header:=xlYes
+
+                    'Select the range for adding % Increase, decrease and total vol (Range is N:P)
+                    With aws.Range("N1:P" & UBound(min_max, 1))
+                    
+                        ' Select copying range and copy array to selected range
+                        .Select
+                        .Value2 = min_max
+                        
+                        ' Apply formatting as required, finally autofit for better presentation
+                        .Columns(3).NumberFormat = "0.00%"
+                        .Cells(4, 3).NumberFormat = "0"
+                        .Columns.AutoFit
+                            
+                    End With
+                '---------------------------------------------------------------------------------------------
+                ' END - Complete calcuation and Copy > % Increase, >% decrease, > total stock volume to worksheet
+                '---------------------------------------------------------------------------------------------
+           
             End With
-
-            .Columns(2).NumberFormat = "0.00000000#" 	' number format for yrly Change cells
-            .Columns(3).NumberFormat = "0.00%" 			' % format for % Change cells
-            
-            ' Clear any formats set to the header by conditional formating
-            .Rows(1).ClearFormats
-            
-            .Columns.AutoFit               ' Autofit for clear presentation
-        
-        End With
         '---------------------------------------------------------------------------------------------
         ' END - Add the summary of Yrly change, % change, Total stock volume by Ticker to Active sheet
-        '---------------------------------------------------------------------------------------------
-        
-        '---------------------------------------------------------------------------------------------
-        ' BEGIN - Copy > % Increase, >% decrease, > total stock volume to worksheet
-        '---------------------------------------------------------------------------------------------
-        
-        With aws.Range(Cells(1, last_Col + UBound(tmp, 2) + 4), _
-                    Cells(UBound(min_max, 1), last_Col + UBound(tmp, 2) + UBound(min_max, 2) + 3))
-                    
-            ' Select copying range and copy array to selected range
-            .Select
-            .Value2 = min_max
-            
-            ' Apply formatting as required, finally autofit for better presentation
-            .Columns(3).NumberFormat = "0.00%"
-            .Cells(4, 3).NumberFormat = "0"
-            .Columns.AutoFit
-                    
-        End With
-        
-        '---------------------------------------------------------------------------------------------
-        ' END - Copy > % Increase, >% decrease, > total stock volume to woorksheet
         '---------------------------------------------------------------------------------------------
         
         'clear & re-initialize all arrays
