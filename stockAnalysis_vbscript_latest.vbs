@@ -206,10 +206,7 @@ Sub Main_AnalyzeStock()
                     min_max(2, 2) = .Cells(2, 1).Value
                     min_max(3, 3) = .Cells(.End(xlDown).Row, 3).Value
                     min_max(3, 2) = .Cells(.End(xlDown).Row, 1).Value
-                    
-                    'min_max(3, 3) = .Cells(UBound(tmp, 1) - 1, 3).Value
-                    'min_max(3, 2) = .Cells(UBound(tmp, 1) - 1, 1).Value
-
+                   
                     .Sort key1:="Total Stock volume", order1:=xlDescending, Header:=xlYes
                     min_max(4, 3) = .Cells(2, 4).Value
                     min_max(4, 2) = .Cells(2, 1).Value
